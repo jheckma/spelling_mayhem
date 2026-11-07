@@ -1,0 +1,11 @@
+{
+  "appId": "com.example.spellingmayhem",
+  "appName": "Spelling Mayhem",
+  "webDir": "www",
+  "backgroundColor": "#060a1c",
+  "ios": {
+    "contentInset": "never",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "spelling-mayhem-ipad",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wraps the Spelling Mayhem web game as a standalone iPad app with Capacitor.",
+  "scripts": {
+    "copy": "node copy-web.js",
+    "setup": "npm run copy && npx cap add ios",
+    "sync": "npm run copy && npx cap sync ios",
+    "open": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

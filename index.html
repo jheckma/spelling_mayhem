@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spelling Mayhem">
+<meta name="theme-color" content="#060a1c">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Spelling Mayhem!!!</title>
+<style>
+:root{--bg:#060a1c;--panel:#101733ee;--line:#2c3a70;--ink:#eef3ff;--dim:#a3b1dc;--cyan:#4fe3ff;--lime:#7dffa0;--red:#ff4d6d;--amber:#ffc94d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
+/* Touch screens: no double-tap zoom, no text selection or long-press menus, no gray tap flash */
+body{position:fixed;inset:0;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+button,select{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:focus-visible,select:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hidden{display:none!important}
+
+/* In-game HUD */
+#hud{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:18px;padding:calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left));font-weight:700;pointer-events:none}
+#hud small{display:block;font-size:11px;letter-spacing:.12em;color:var(--dim);font-weight:600}
+#hud .stat{font-size:20px;font-variant-numeric:tabular-nums}
+#hud .spacer{flex:1}
+#shields{color:var(--cyan);letter-spacing:3px;font-size:18px}
+#hud button{pointer-events:auto;white-space:nowrap;background:#1a2450;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-weight:600}
+#panel{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom));text-align:center;background:linear-gradient(transparent,#060a1cf2 22%)}
+#slots{display:flex;justify-content:center;flex-wrap:nowrap;gap:var(--gap,6px);margin:0 auto 8px;min-height:var(--slot,46px)}
+.slot{width:var(--slot,46px);height:calc(var(--slot,46px)*1.15);border-radius:7px;border:2px solid var(--line);background:#0d1430;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--slot,46px)*.62)}
+.slot.next{border-color:var(--cyan);box-shadow:0 0 12px #4fe3ff88}
+.slot.on{border-color:var(--lime);color:var(--lime);background:#10301f}
+.slot.miss{border-color:var(--red);color:var(--red);background:#35101c}
+.sep{width:calc(var(--slot,46px)*.4);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--slot,46px)*.62);color:var(--dim)}
+#strikes{height:18px;font-size:13px;color:var(--dim);margin-bottom:6px}
+#strikes b{color:var(--red);letter-spacing:2px}
+#actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.act{background:#1a2450;border:1px solid var(--line);border-radius:10px;padding:9px 16px;font-weight:600}
+.act kbd{font:inherit;font-size:12px;color:var(--amber);margin-left:6px}
+.act:hover{background:#243170}
+.act.fire{background:#7a1f3d;border-color:var(--red)}
+.act.fire:hover{background:#9a2950}
+.spell{font-size:20px;font-weight:700;margin:0 0 10px;color:var(--dim);overflow-wrap:anywhere}
+.spell .ok{color:var(--lime)}
+.spell .bad{color:var(--red);text-decoration:underline}
+#defbox{max-width:760px;margin:0 auto 8px;font-size:17px;line-height:1.35;color:var(--ink)}
+#defbox i{color:var(--amber)}
+#defbox:empty{display:none}
+#keys{margin-top:8px;display:flex;flex-direction:column;gap:5px;align-items:center;user-select:none;-webkit-user-select:none}
+#keys div{display:flex;gap:4px;justify-content:center;width:100%}
+#keys button{flex:1 1 0;max-width:46px;height:44px;padding:0;border-radius:7px;background:#223066;border:1px solid var(--line);font-weight:700;font-size:17px}
+#keys button:active{background:var(--cyan);color:#001}
+
+/* Screens */
+.screen{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;background:#060a1c99}
+.card{width:100%;max-width:760px;margin:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px}
+h1{margin:0;font-size:clamp(38px,8vw,62px);line-height:1;font-weight:900;letter-spacing:.04em;color:var(--cyan);text-shadow:0 0 22px #4fe3ff77}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#titleFx{position:static;display:block;width:100%;height:190px}
+h2{margin:0 0 8px;font-size:28px}
+.tag{margin:8px 0 18px;color:var(--dim);font-size:17px}
+h3{margin:18px 0 8px;font-size:13px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px}
+.pick{text-align:left;background:#172048;border:2px solid var(--line);border-radius:10px;padding:9px 12px}
+.pick b{display:block}
+.pick span{font-size:13px;color:var(--dim)}
+.pick[aria-pressed=true]{border-color:var(--cyan);background:#17345c}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select{flex:1;min-width:180px;background:#172048;border:2px solid var(--line);border-radius:10px;padding:9px}
+.go{display:block;width:100%;margin-top:20px;padding:14px;font-size:22px;font-weight:800;letter-spacing:.06em;color:#02131a;background:var(--cyan);border:0;border-radius:12px}
+.go:hover{background:#86ecff}
+.warn{margin-top:12px;padding:10px 12px;border:1px solid var(--red);border-radius:10px;color:#ffc2cd}
+.big{font-size:clamp(30px,7vw,48px);font-weight:900;letter-spacing:.05em;color:var(--amber);overflow-wrap:anywhere}
+.misses{list-style:none;margin:0;padding:0;max-height:34vh;overflow-y:auto}
+.misses li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.misses button{background:none;border:0;padding:0 4px;font-size:17px}
+.misses b{white-space:nowrap}
+.misses span{font-size:14px;color:var(--dim)}
+.stats{display:flex;gap:26px;flex-wrap:wrap;font-size:26px;font-weight:800;margin:10px 0}
+.stats small{display:block;font-size:12px;letter-spacing:.1em;color:var(--dim);font-weight:600}
+@media (max-width:640px){
+#titleFx{height:210px}
+#hud{gap:10px;padding:6px 10px;flex-wrap:wrap}
+#hud small{font-size:9px}
+#hud .stat{font-size:15px}
+#shields{font-size:13px}
+#hud button{padding:3px 8px;font-size:13px}
+.act{padding:7px 10px;font-size:14px}
+}
+@media (pointer:coarse){.act kbd{display:none}}
+.touch .act kbd{display:none}
+.touch #hud button{min-height:40px;padding:6px 14px}
+/* Tablets (iPad): bigger keys and buttons for fingers */
+@media (min-width:700px) and (min-height:600px){
+.touch #keys{gap:7px}
+.touch #keys div{gap:7px}
+.touch #keys button{max-width:72px;height:58px;font-size:24px;border-radius:10px}
+.touch .act{padding:12px 20px;font-size:17px;min-height:48px}
+.touch .pick{padding:12px 14px}
+}
+@media (max-height:560px){.slot{height:var(--slot,46px)}#keys button{height:34px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hidden">
+  <div><small>SCORE</small><span class="stat" id="score">0</span></div>
+  <div><small>STREAK BONUS</small><span class="stat" id="combo">×1</span></div>
+  <div><small>ROUND</small><span class="stat" id="left">0</span></div>
+  <div><small>SHIELDS</small><span id="shields"></span></div>
+  <div><small>FIREPOWER</small><span class="stat" id="power" style="color:var(--lime)">Lv 1</span></div>
+  <div class="spacer"></div>
+  <button id="musicBtn" type="button">Music on</button>
+  <button id="soundBtn" type="button">Sound on</button>
+  <button id="pauseBtn" type="button">Pause</button>
+</div>
+
+<div id="panel" class="hidden">
+  <div id="defbox" aria-live="polite"></div>
+  <div id="slots" aria-hidden="true"></div>
+  <div id="strikes"></div>
+  <div id="actions">
+    <button class="act" id="sayBtn" type="button">🔊 Hear word <kbd>Space</kbd></button>
+    <button class="act" id="defBtn" type="button">📖 Definition &amp; part of speech <kbd>1</kbd></button>
+    <button class="act" id="eraseBtn" type="button">⌫ Erase <kbd>Backspace</kbd></button>
+    <button class="act fire" id="fireBtn" type="button">🚀 Fire <kbd>Enter</kbd></button>
+  </div>
+  <div id="keys" class="hidden"></div>
+</div>
+
+<section id="menu" class="screen">
+  <div class="card">
+    <h1 class="sr">Spelling Mayhem!!!</h1>
+    <canvas id="titleFx" aria-hidden="true"></canvas>
+    <p class="tag">A spelling bee in space. Listen to the pronouncer, spell the word, then fire. Your spelling is only judged when you fire. Every word you get right upgrades your ship: it grows bigger, carries more missiles, and more wingmen join your squadron.</p>
+    <h3>Word list</h3>
+    <div class="grid" id="lists"></div>
+    <h3>Bee rules</h3>
+    <div class="grid" id="diffs"></div>
+    <h3>Bee length</h3>
+    <div class="grid" id="lengths"></div>
+    <div class="row" style="margin-top:16px">
+      <button class="act" id="testVoice" type="button">🔊 Hear your commander</button>
+      <button class="act" id="menuMusicBtn" type="button">🎵 Music on</button>
+    </div>
+    <button class="go" id="start" type="button">START THE BEE</button>
+  </div>
+</section>
+
+<section id="reveal" class="screen hidden">
+  <div class="card">
+    <h2 id="revealTitle"></h2>
+    <p id="revealSpell" class="spell"></p>
+    <div class="big" id="revealWord"></div>
+    <p id="revealDef" class="tag"></p>
+    <p class="tag" id="revealAgain"></p>
+    <button class="go" id="revealGo" type="button">CONTINUE</button>
+  </div>
+</section>
+
+<section id="pause" class="screen hidden">
+  <div class="card">
+    <h2>Paused</h2>
+    <p class="tag">The enemy ship is holding position.</p>
+    <button class="go" id="resume" type="button">RESUME</button>
+    <button class="act" id="quit" type="button" style="margin-top:12px">End the bee</button>
+  </div>
+</section>
+
+<section id="over" class="screen hidden">
+  <div class="card">
+    <h2 id="overTitle"></h2>
+    <p class="tag" id="overTag"></p>
+    <div class="stats" id="overStats"></div>
+    <h3 id="missHead">Words to practice</h3>
+    <ul class="misses" id="missList"></ul>
+    <button class="go" id="again" type="button">FLY AGAIN</button>
+    <button class="act" id="toMenu" type="button" style="margin-top:12px">Change bee</button>
+  </div>
+</section>
+
+<script src="words.js"></script>
+<script src="voice.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
